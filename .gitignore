@@ -1,0 +1,33 @@
+# Claude Code — never commit
+CLAUDE.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Data
+*.db
+*.db-shm
+*.db-wal
+data/
+
+# Environment
+.env
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

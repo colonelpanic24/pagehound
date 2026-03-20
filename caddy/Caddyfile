@@ -1,0 +1,22 @@
+{
+    admin off
+}
+
+:80 {
+    # WebSocket upgrade
+    @ws {
+        path /ws
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    reverse_proxy @ws app:8000
+
+    # API
+    reverse_proxy /api/* app:8000
+    reverse_proxy /covers/* app:8000
+
+    # Frontend SPA — serve static build, fallback to index.html
+    root * /srv/www
+    try_files {path} /index.html
+    file_server
+}

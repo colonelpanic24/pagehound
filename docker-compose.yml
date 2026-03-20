@@ -1,0 +1,74 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - BOOKS_DIR=/books
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/bookshelf.db
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - books_data:/books
+      - app_data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - BOOKS_DIR=/books
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/bookshelf.db
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - books_data:/books
+      - app_data:/app/data
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+    depends_on:
+      - redis
+      - app
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    # The built static files are served via Caddy; this service just builds them.
+    # In dev you can run `npm run dev` directly.
+    profiles:
+      - build-only
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      # Mount the frontend build output
+      - frontend_dist:/srv/www:ro
+    depends_on:
+      - app
+
+volumes:
+  redis_data:
+  app_data:
+  books_data:
+  caddy_data:
+  caddy_config:
+  frontend_dist:
