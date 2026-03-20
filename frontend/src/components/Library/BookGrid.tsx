@@ -4,13 +4,14 @@ import type { Book, GroupBy } from '@/types'
 interface Props {
   books: Book[]
   groupBy: GroupBy
+  onBookClick?: (book: Book) => void
 }
 
-function GridLayout({ books }: { books: Book[] }) {
+function GridLayout({ books, onBookClick }: { books: Book[]; onBookClick?: (book: Book) => void }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {books.map((book) => (
-        <BookCard key={book.id} book={book} />
+        <BookCard key={book.id} book={book} onClick={() => onBookClick?.(book)} />
       ))}
     </div>
   )
@@ -31,9 +32,9 @@ function getGroupKey(book: Book, groupBy: GroupBy): string {
   }
 }
 
-export function BookGrid({ books, groupBy }: Props) {
+export function BookGrid({ books, groupBy, onBookClick }: Props) {
   if (groupBy === 'none') {
-    return <GridLayout books={books} />
+    return <GridLayout books={books} onBookClick={onBookClick} />
   }
 
   // Group books
@@ -60,7 +61,7 @@ export function BookGrid({ books, groupBy }: Props) {
               ({groupBooks.length})
             </span>
           </h2>
-          <GridLayout books={groupBooks} />
+          <GridLayout books={groupBooks} onBookClick={onBookClick} />
         </section>
       ))}
     </div>

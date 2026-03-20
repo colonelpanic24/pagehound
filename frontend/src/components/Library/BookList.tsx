@@ -14,6 +14,7 @@ import type { Book } from '@/types'
 
 interface Props {
   books: Book[]
+  onBookClick?: (book: Book) => void
 }
 
 function formatFileSize(bytes: number | null): string {
@@ -111,7 +112,7 @@ const columns = [
   }),
 ]
 
-export function BookList({ books }: Props) {
+export function BookList({ books, onBookClick }: Props) {
   const [sorting, setSorting] = useState<SortingState>([])
 
   const table = useReactTable({
@@ -172,6 +173,7 @@ export function BookList({ books }: Props) {
             table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
+                onClick={() => onBookClick?.(row.original)}
                 className={cn(
                   'border-t border-border hover:bg-muted/30 transition-colors cursor-pointer',
                   row.original.is_missing && 'opacity-50'

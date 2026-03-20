@@ -1,26 +1,25 @@
 import { Outlet } from 'react-router-dom'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { Sidebar } from './Sidebar'
-import { JobsStatusBar } from '@/components/Jobs/JobsStatusBar'
 import { JobsEventHandler } from '@/components/Jobs/JobsEventHandler'
 import { Toaster } from '@/components/ui/toaster'
 
 export function AppLayout() {
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+    <TooltipProvider>
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar />
 
-      <main className="flex-1 overflow-y-auto pb-8">
-        <Outlet />
-      </main>
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
 
-      {/* Global WS event → jobs store wiring */}
-      <JobsEventHandler />
+        {/* Global WS event → jobs store wiring */}
+        <JobsEventHandler />
 
-      {/* Persistent jobs status bar */}
-      <JobsStatusBar />
-
-      {/* Toast notifications */}
-      <Toaster />
-    </div>
+        {/* Toast notifications */}
+        <Toaster />
+      </div>
+    </TooltipProvider>
   )
 }

@@ -9,7 +9,25 @@
       "Bash(.venv/bin/pip install:*)",
       "Bash(ruff --version)",
       "Bash(pip install:*)",
-      "Bash(ruff check:*)"
+      "Bash(ruff check:*)",
+      "Bash(backend/.venv/bin/python3 -m pytest backend/tests/ -q 2>&1)",
+      "Bash(backend/.venv/bin/pip install:*)",
+      "Bash(backend/.venv/bin/python3 -m pytest backend/tests/ -q)",
+      "Bash(npm test:*)",
+      "Bash(git stash:*)",
+      "Bash(find /var/home/stefan/pagehound -type f -name *.tsx -o -name *.css -o -name tailwind.config.*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({**d.get\\(''''dependencies'''',{}\\), **d.get\\(''''devDependencies'''',{}\\)}, indent=2\\)\\)\")",
+      "Bash(npx shadcn@latest add tooltip card --yes)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(backend/.venv/bin/python3 -m ruff check app/)",
+      "Bash(backend/.venv/bin/python3 -m ruff check backend/app/)",
+      "Bash(backend/.venv/bin/python3 -m ruff check backend/app/models/download.py backend/app/routers/downloads.py backend/app/services/sources/ backend/app/tasks/download_book.py backend/app/database.py backend/app/models/__init__.py backend/app/main.py)",
+      "Bash(backend/.venv/bin/python3 -m ruff check --fix backend/app/database.py backend/app/tasks/download_book.py)",
+      "Bash(node:*)",
+      "Bash(.venv/bin/python3 -m ruff check app/routers/books.py)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

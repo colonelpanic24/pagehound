@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { LayoutGrid, List, Search, ScanLine } from 'lucide-react'
+import { LayoutGrid, List, Search, ScanLine, ArrowUp, ArrowDown, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { triggerScan } from '@/api/books'
+import { triggerEnrichAll } from '@/api/metadata'
 import { toast } from '@/hooks/useToast'
 import type { BookFilters, GroupBy, ViewMode } from '@/types'
 
@@ -50,6 +51,15 @@ export function LibraryToolbar({
     }
   }
 
+  async function handleEnrichAll() {
+    try {
+      const result = await triggerEnrichAll()
+      toast({ title: 'Enrichment started', description: `Queued ${result.queued} book${result.queued === 1 ? '' : 's'} for metadata lookup.` })
+    } catch {
+      toast({ title: 'Enrichment failed', description: 'Could not start metadata enrichment.', variant: 'destructive' })
+    }
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-3 py-3">
       {/* Left: count */}
@@ -75,25 +85,35 @@ export function LibraryToolbar({
 
       {/* Right: controls */}
       <div className="flex items-center gap-2 ml-auto flex-wrap">
-        {/* Sort */}
+        {/* Sort field */}
         <select
-          value={`${filters.sort ?? 'title'}:${filters.sort_dir ?? 'asc'}`}
-          onChange={(e) => {
-            const [sort, sort_dir] = e.target.value.split(':') as [string, 'asc' | 'desc']
-            onFiltersChange({ ...filters, sort, sort_dir })
-          }}
+          value={filters.sort ?? 'added_date'}
+          onChange={(e) => onFiltersChange({ ...filters, sort: e.target.value })}
           className={cn(
             'h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground',
             'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background'
           )}
         >
-          <option value="title:asc">Title A–Z</option>
-          <option value="title:desc">Title Z–A</option>
-          <option value="added_date:desc">Recently added</option>
-          <option value="added_date:asc">Oldest added</option>
-          <option value="published_date:desc">Published (newest)</option>
-          <option value="published_date:asc">Published (oldest)</option>
+          <option value="title">Title</option>
+          <option value="added_date">Date added</option>
+          <option value="published_date">Published</option>
+          <option value="rating">Rating</option>
         </select>
+
+        {/* Sort direction toggle */}
+        <button
+          onClick={() => onFiltersChange({ ...filters, sort_dir: filters.sort_dir === 'asc' ? 'desc' : 'asc' })}
+          aria-label={filters.sort_dir === 'asc' ? 'Sort ascending' : 'Sort descending'}
+          className={cn(
+            'h-9 w-9 flex items-center justify-center rounded-md border border-input bg-background',
+            'text-muted-foreground hover:text-foreground hover:bg-accent transition-colors'
+          )}
+        >
+          {filters.sort_dir === 'asc'
+            ? <ArrowUp className="h-4 w-4" />
+            : <ArrowDown className="h-4 w-4" />
+          }
+        </button>
 
         {/* Group by */}
         <select
@@ -140,6 +160,12 @@ export function LibraryToolbar({
             <List className="h-4 w-4" />
           </button>
         </div>
+
+        {/* Enrich all button */}
+        <Button size="sm" variant="outline" onClick={handleEnrichAll} className="gap-1.5">
+          <Sparkles className="h-4 w-4" />
+          Enrich all
+        </Button>
 
         {/* Scan button */}
         <Button size="sm" onClick={handleScan} className="gap-1.5">

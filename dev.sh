@@ -62,6 +62,9 @@ tmux send-keys -t "$SESSION:2" "cd '$REPO/backend' && \
 tmux new-window -t "$SESSION" -n "frontend"
 tmux send-keys -t "$SESSION:3" "cd '$REPO/frontend' && npm install --silent && npm run dev" Enter
 
+# Open browser once the frontend dev server is ready
+(until curl -s http://localhost:5173 &>/dev/null; do sleep 1; done && xdg-open http://localhost:5173) &
+
 # Focus the backend window on attach
 tmux select-window -t "$SESSION:1"
 

@@ -42,7 +42,15 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db():
-    from .models import author, book, job, reading_progress, series  # noqa: F401
+    from .models import (  # noqa: F401
+        author,
+        book,
+        download,
+        job,
+        metadata_review,
+        reading_progress,
+        series,
+    )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

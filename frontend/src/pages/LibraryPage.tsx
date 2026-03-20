@@ -5,9 +5,10 @@ import { LibraryToolbar } from '@/components/Library/LibraryToolbar'
 import { FilterSidebar } from '@/components/Library/FilterSidebar'
 import { BookGrid } from '@/components/Library/BookGrid'
 import { BookList } from '@/components/Library/BookList'
+import { BookDetailDrawer } from '@/components/Library/BookDetailDrawer'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import type { BookFilters, GroupBy, ViewMode } from '@/types'
+import type { Book, BookFilters, GroupBy, ViewMode } from '@/types'
 
 function getStoredViewMode(): ViewMode {
   try {
@@ -60,6 +61,7 @@ export function LibraryPage() {
   const [groupBy, setGroupBy] = useState<GroupBy>(getStoredGroupBy)
   const [filters, setFilters] = useState<BookFilters>({})
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null)
 
   const { books, isLoading } = useBooks(filters)
 
@@ -137,12 +139,14 @@ export function LibraryPage() {
           ) : books.length === 0 ? (
             <EmptyState />
           ) : viewMode === 'grid' ? (
-            <BookGrid books={books} groupBy={groupBy} />
+            <BookGrid books={books} groupBy={groupBy} onBookClick={setSelectedBook} />
           ) : (
-            <BookList books={books} />
+            <BookList books={books} onBookClick={setSelectedBook} />
           )}
         </div>
       </div>
+
+      <BookDetailDrawer book={selectedBook} onClose={() => setSelectedBook(null)} />
     </div>
   )
 }

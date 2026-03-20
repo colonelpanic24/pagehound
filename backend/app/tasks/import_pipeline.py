@@ -146,7 +146,14 @@ def import_book_file(self, file_path: str, job_id: str | None = None) -> dict:
         except Exception as pub_err:
             logger.warning("import_book_file: publish_event failed: %s", pub_err)
 
-        # 7. Return
+        # 7. Kick off metadata enrichment asynchronously
+        try:
+            from .metadata_enrich import enrich_book_metadata
+            enrich_book_metadata.delay(book_id)
+        except Exception as enrich_err:
+            logger.warning("import_book_file: could not enqueue enrichment for book %s: %s", book_id, enrich_err)
+
+        # 8. Return
         return {"book_id": book_id, "title": book_title}
 
     except Exception as e:

@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
 from .database import init_db
-from .routers import books, jobs, library, ws
+from .routers import books, downloads, jobs, library, metadata, ws
 from .websocket_manager import ws_manager
 
 logging.basicConfig(level=logging.INFO)
@@ -60,6 +60,8 @@ app.include_router(ws.router)
 app.include_router(books.router, prefix="/api")
 app.include_router(jobs.router, prefix="/api")
 app.include_router(library.router, prefix="/api")
+app.include_router(metadata.router, prefix="/api")
+app.include_router(downloads.router, prefix="/api")
 
 
 @app.get("/api/health")

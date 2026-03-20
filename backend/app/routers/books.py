@@ -1,7 +1,10 @@
+import os
 from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from sqlalchemy import asc, desc, distinct, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -30,8 +33,8 @@ def _book_to_dict(book: Book) -> dict:
         "file_path": book.file_path,
         "file_format": book.file_format,
         "file_size": book.file_size,
-        "added_date": book.added_date,
-        "modified_date": book.modified_date,
+        "added_date": book.added_date.isoformat() if book.added_date else None,
+        "modified_date": book.modified_date.isoformat() if book.modified_date else None,
         "metadata_source": book.metadata_source,
         "metadata_confidence": book.metadata_confidence,
         "series_id": book.series_id,
@@ -179,3 +182,68 @@ async def update_book(book_id: int, updates: dict, db: AsyncSession = Depends(ge
     await ws_manager.broadcast("library.book_updated", {"book": book_dict})
 
     return book_dict
+
+
+@router.get("/{book_id}/file")
+async def serve_book_file(book_id: int, db: AsyncSession = Depends(get_db)):
+    """Stream the raw book file to the browser."""
+    result = await db.execute(select(Book).where(Book.id == book_id))
+    book = result.scalar_one_or_none()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    if not book.file_path or not os.path.exists(book.file_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    content_types: dict[str, str] = {
+        "epub": "application/epub+zip",
+        "pdf": "application/pdf",
+        "mobi": "application/x-mobipocket-ebook",
+    }
+    media_type = content_types.get(book.file_format or "", "application/octet-stream")
+    return FileResponse(book.file_path, media_type=media_type)
+
+
+class ProgressBody(BaseModel):
+    percent_complete: float
+    position: str | None = None
+
+
+@router.get("/{book_id}/progress")
+async def get_reading_progress(book_id: int, db: AsyncSession = Depends(get_db)):
+    """Return the browser reading progress for a book."""
+    from ..models.reading_progress import ReadingProgress
+
+    result = await db.execute(
+        select(ReadingProgress).where(
+            ReadingProgress.book_id == book_id,
+            ReadingProgress.kobo_device_id == "browser",
+        )
+    )
+    p = result.scalar_one_or_none()
+    if not p:
+        return {"percent_complete": 0.0, "position": None}
+    return {"percent_complete": p.percent_complete or 0.0, "position": p.last_read_position}
+
+
+@router.put("/{book_id}/progress")
+async def save_reading_progress(
+    book_id: int, body: ProgressBody, db: AsyncSession = Depends(get_db)
+):
+    """Persist browser reading position for a book."""
+    from ..models.reading_progress import ReadingProgress
+
+    result = await db.execute(
+        select(ReadingProgress).where(
+            ReadingProgress.book_id == book_id,
+            ReadingProgress.kobo_device_id == "browser",
+        )
+    )
+    p = result.scalar_one_or_none()
+    if not p:
+        p = ReadingProgress(book_id=book_id, kobo_device_id="browser")
+        db.add(p)
+
+    p.percent_complete = body.percent_complete
+    p.last_read_position = (body.position or "")[:512]
+    p.last_synced = datetime.utcnow()
+    return {"ok": True}

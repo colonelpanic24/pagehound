@@ -54,10 +54,18 @@ export function JobsEventHandler() {
         })
       }),
 
-      onWsEvent('metadata.review_needed', ({ payload }) => {
+      onWsEvent('metadata.review_needed', () => {
         toast({
           title: 'Metadata review needed',
-          description: `Book ${payload.book_id} needs metadata review.`,
+          description: 'A book needs metadata review. Check the Review queue.',
+        })
+      }),
+
+      onWsEvent('metadata.enriched', ({ payload }) => {
+        const book = (payload as { book?: { title?: string } }).book
+        toast({
+          title: 'Metadata updated',
+          description: book?.title ? `"${book.title}" was enriched automatically.` : 'Book metadata was updated.',
         })
       }),
     ]
