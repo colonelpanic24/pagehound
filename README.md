@@ -6,15 +6,29 @@ Intended as a modern replacement for Calibre-Web / Booklore.
 
 ---
 
-## Features (planned)
+## Screenshots
+
+| Library grid | List view |
+|---|---|
+| ![Library](docs/screenshots/library.png) | ![List view](docs/screenshots/library-list.png) |
+
+| Metadata review | Settings |
+|---|---|
+| ![Review queue](docs/screenshots/review-queue.png) | ![Settings](docs/screenshots/settings.png) |
+
+---
+
+## Features
 
 - [x] Library scanning and indexing (EPUB, PDF, MOBI, AZW)
 - [x] Real-time job status via WebSockets (no polling)
 - [x] Dark mode
-- [ ] Metadata fetch from Google Books and Open Library with confidence scoring
+- [x] Metadata fetch from Google Books and Open Library with confidence scoring
+- [x] Per-field metadata review queue with selective field approval
+- [x] Kobo sync (store API + OPDS)
+- [x] Library search, filter, group, and sort
 - [ ] Anna's Archive search and download
 - [ ] In-browser reader (epub.js + pdf.js)
-- [ ] Kobo sync (store API + OPDS)
 
 ---
 
@@ -124,3 +138,16 @@ npm run build   # type-check + build
 ```
 
 CI runs all of the above on every push and PR via GitHub Actions.
+
+---
+
+## Updating screenshots
+
+Screenshots are generated from a seeded demo database and captured with Playwright.
+
+```bash
+# Requires: Redis running, backend venv exists
+scripts/update_screenshots.sh
+```
+
+This seeds fictional book data, builds the frontend, starts a demo backend on port 8002, captures screenshots, and cleans up. Run it when UI changes warrant updated screenshots.

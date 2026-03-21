@@ -3,10 +3,27 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import get_settings
 from ..database import get_db
 from ..models.job import Job
 
 router = APIRouter(prefix="/library", tags=["library"])
+
+
+@router.get("/settings")
+async def read_settings():
+    """Return non-secret runtime configuration values."""
+    s = get_settings()
+    return {
+        "books_dir": s.books_dir,
+        "base_url": s.base_url,
+        "auto_apply_threshold": s.auto_apply_threshold,
+        "metadata_strategy": s.metadata_strategy,
+        "preferred_source": s.preferred_source,
+        "google_books_api_key_set": bool(s.google_books_api_key),
+        "kobo_enabled": s.kobo_enabled,
+        "opds_enabled": s.opds_enabled,
+    }
 
 
 @router.post("/scan")

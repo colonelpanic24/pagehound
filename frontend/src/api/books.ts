@@ -10,7 +10,7 @@ export async function fetchBooks(filters: BookFilters = {}): Promise<Book[]> {
     }
   }
   const qs = params.toString()
-  const res = await fetch(`${BASE}/books${qs ? `?${qs}` : ''}`)
+  const res = await fetch(`${BASE}/books/${qs ? `?${qs}` : ''}`)
   if (!res.ok) throw new Error(`Failed to fetch books: ${res.statusText}`)
   return res.json() as Promise<Book[]>
 }

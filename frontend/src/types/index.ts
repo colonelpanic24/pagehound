@@ -113,6 +113,16 @@ export interface SearchResult {
   extra: Record<string, unknown>
 }
 
+export interface KoboDevice {
+  id: number
+  name: string
+  auth_token: string
+  device_id: string | null
+  last_synced: string | null
+  created_at: string
+  sync_url: string
+}
+
 export interface DownloadItem {
   id: number
   title: string

@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 from datetime import datetime
 
 from .celery_app import celery_app
@@ -119,6 +120,26 @@ def run_library_scan(self, job_id: str, triggered_by: str = "user") -> dict:
             publish_event("job.completed", {"job_id": job_id, "summary": summary})
         except Exception as e:
             logger.warning("run_library_scan: publish_event(job.completed) failed: %s", e)
+
+        # 8. If new books were imported, kick off a single tracked enrichment job
+        if imported > 0:
+            try:
+                from ..models.job import Job
+                from .metadata_enrich import enrich_library_metadata
+
+                enrich_job_id = str(uuid.uuid4())
+                with SyncSession() as session:
+                    session.add(Job(
+                        id=enrich_job_id,
+                        type="metadata_enrich",
+                        label="Library metadata enrichment",
+                        status="pending",
+                        triggered_by="scan",
+                    ))
+                    session.commit()
+                enrich_library_metadata.delay(enrich_job_id)
+            except Exception as e:
+                logger.warning("run_library_scan: could not enqueue enrichment job: %s", e)
 
         return summary
 

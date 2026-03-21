@@ -47,6 +47,8 @@ async def init_db():
         book,
         download,
         job,
+        kobo_device,
+        kobo_sync_state,
         metadata_review,
         reading_progress,
         series,
