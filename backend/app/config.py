@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     secret_key: str = "changeme"
     base_url: str = "http://localhost"
 
+    kobo_enabled: bool = True
+    opds_enabled: bool = True
+
     auto_apply_threshold: int = 80
     metadata_strategy: str = "prefer_online"  # prefer_online | fill_gaps
     preferred_source: str = "google_books"  # google_books | open_library

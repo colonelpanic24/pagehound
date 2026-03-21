@@ -8,6 +8,13 @@ celery_app = Celery(
     "pagehound",
     broker=settings.redis_url,
     backend=settings.redis_url,
+    include=[
+        "app.tasks.library_scan",
+        "app.tasks.refresh_scan",
+        "app.tasks.import_pipeline",
+        "app.tasks.download_book",
+        "app.tasks.metadata_enrich",
+    ],
 )
 
 celery_app.conf.update(
@@ -19,6 +26,3 @@ celery_app.conf.update(
     task_track_started=True,
     worker_prefetch_multiplier=1,
 )
-
-# Auto-discover tasks in the tasks package
-celery_app.autodiscover_tasks(["app.tasks"])

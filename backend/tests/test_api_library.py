@@ -16,6 +16,7 @@ async def test_scan_creates_job_and_returns_job_id(client, mocker):
 @pytest.mark.asyncio
 async def test_scan_persists_job_record(client, db_session, mocker):
     from sqlalchemy import select
+
     from app.models.job import Job
 
     mocker.patch("app.tasks.library_scan.run_library_scan.delay")

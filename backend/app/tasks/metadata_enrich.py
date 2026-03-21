@@ -1,6 +1,5 @@
 """Celery tasks for metadata enrichment."""
 import logging
-import uuid
 from datetime import datetime
 
 from .celery_app import celery_app
@@ -30,13 +29,10 @@ def enrich_book_metadata(self, book_id: int) -> dict:
 def enrich_library_metadata(self, job_id: str) -> dict:
     """Enrich all books that have no metadata_source yet."""
     try:
-        from ..config import get_settings
         from ..database import SyncSession
         from ..models.book import Book
         from ..models.job import Job
         from ..websocket_manager import publish_event
-
-        settings = get_settings()
 
         with SyncSession() as db:
             job = db.get(Job, job_id)

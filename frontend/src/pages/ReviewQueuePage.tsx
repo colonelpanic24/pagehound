@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, XCircle, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
+import { CheckCircle2, XCircle, Sparkles } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useReviewQueue } from '@/hooks/useReviewQueue'
 import { approveReview, rejectReview } from '@/api/metadata'
@@ -60,17 +60,41 @@ export function ReviewQueuePage() {
 
 function ReviewCard({ review }: { review: MetadataReview }) {
   const queryClient = useQueryClient()
-  const [expanded, setExpanded] = useState(false)
   const [busy, setBusy] = useState(false)
   const best = review.candidates[0] as MetadataCandidate | undefined
+
+  // Compute which fields actually differ
+  const changedFields = Object.entries(review.suggested_fields as Record<string, unknown>)
+    .filter(([field, value]) => {
+      const current = (review.book as unknown as Record<string, unknown>)[field]
+      return value !== null && value !== undefined && value !== current
+    })
+
+  // All fields checked by default
+  const [checkedFields, setCheckedFields] = useState<Set<string>>(
+    () => new Set(changedFields.map(([f]) => f))
+  )
+
+  function toggleField(field: string) {
+    setCheckedFields((prev) => {
+      const next = new Set(prev)
+      if (next.has(field)) next.delete(field)
+      else next.add(field)
+      return next
+    })
+  }
 
   async function handleApprove() {
     setBusy(true)
     try {
-      await approveReview(review.id)
+      const selectedFields = Object.fromEntries(
+        changedFields.filter(([f]) => checkedFields.has(f))
+      )
+      await approveReview(review.id, selectedFields)
       queryClient.invalidateQueries({ queryKey: ['review-queue'] })
       queryClient.invalidateQueries({ queryKey: ['books'] })
-      toast({ title: 'Approved', description: `Metadata applied to "${review.book.title}".` })
+      const appliedCount = Object.keys(selectedFields).length
+      toast({ title: 'Approved', description: `Applied ${appliedCount} field${appliedCount === 1 ? '' : 's'} to "${review.book.title}".` })
     } catch {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not approve review.' })
     } finally {
@@ -91,12 +115,7 @@ function ReviewCard({ review }: { review: MetadataReview }) {
     }
   }
 
-  // Compute which fields actually differ
-  const changedFields = Object.entries(review.suggested_fields as Record<string, unknown>)
-    .filter(([field, value]) => {
-      const current = (review.book as unknown as Record<string, unknown>)[field]
-      return value !== null && value !== undefined && value !== current
-    })
+  const checkedCount = checkedFields.size
 
   return (
     <Card>
@@ -130,7 +149,7 @@ function ReviewCard({ review }: { review: MetadataReview }) {
               )}
               <ConfidenceBadge score={review.suggested_confidence} />
               <span className="text-xs text-muted-foreground">
-                {changedFields.length} field{changedFields.length === 1 ? '' : 's'} would change
+                {checkedCount} of {changedFields.length} field{changedFields.length === 1 ? '' : 's'} selected
               </span>
             </div>
           </div>
@@ -141,9 +160,9 @@ function ReviewCard({ review }: { review: MetadataReview }) {
               <XCircle className="h-4 w-4 mr-1" />
               Reject
             </Button>
-            <Button size="sm" onClick={handleApprove} disabled={busy}>
+            <Button size="sm" onClick={handleApprove} disabled={busy || checkedCount === 0}>
               <CheckCircle2 className="h-4 w-4 mr-1" />
-              Approve
+              Apply {checkedCount > 0 && checkedCount < changedFields.length ? `(${checkedCount})` : ''}
             </Button>
           </div>
         </div>
@@ -151,44 +170,42 @@ function ReviewCard({ review }: { review: MetadataReview }) {
 
       {changedFields.length > 0 && (
         <CardContent className="pt-0">
-          {/* Toggle diff */}
-          <button
-            onClick={() => setExpanded((e) => !e)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
-          >
-            {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            {expanded ? 'Hide changes' : 'Show changes'}
-          </button>
-
-          {expanded && (
-            <div className="rounded-md border overflow-hidden text-sm">
-              <div className="grid grid-cols-[auto_1fr_1fr] bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground border-b">
-                <span className="w-24">Field</span>
+          <div className="rounded-md border overflow-hidden text-sm">
+              <div className="grid grid-cols-[1.5rem_6rem_1fr_1fr] bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground border-b gap-3">
+                <span />
+                <span>Field</span>
                 <span>Current</span>
                 <span>Suggested</span>
               </div>
               {changedFields.map(([field, suggested]) => {
                 const current = (review.book as unknown as Record<string, unknown>)[field]
+                const checked = checkedFields.has(field)
                 return (
-                  <div
+                  <label
                     key={field}
-                    className="grid grid-cols-[auto_1fr_1fr] px-3 py-2 border-b last:border-0 gap-3"
+                    className="grid grid-cols-[1.5rem_6rem_1fr_1fr] px-3 py-2 border-b last:border-0 gap-3 items-start cursor-pointer hover:bg-muted/30 transition-colors"
                   >
-                    <span className="w-24 text-xs text-muted-foreground shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleField(field)}
+                      className="mt-0.5 h-3.5 w-3.5 rounded border-input accent-primary cursor-pointer"
+                    />
+                    <span className={`text-xs shrink-0 ${checked ? 'text-foreground' : 'text-muted-foreground/50'}`}>
                       {FIELD_LABELS[field] ?? field}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate">
+                    <span className={`text-xs truncate ${checked ? 'text-muted-foreground' : 'text-muted-foreground/40'}`}>
                       {current != null ? String(current) : <em>empty</em>}
                     </span>
-                    <span className="text-xs font-medium truncate">{String(suggested)}</span>
-                  </div>
+                    <span className={`text-xs font-medium truncate ${checked ? 'text-foreground' : 'text-muted-foreground/40 line-through'}`}>
+                      {String(suggested)}
+                    </span>
+                  </label>
                 )
               })}
             </div>
-          )}
-
           {/* Other candidates */}
-          {review.candidates.length > 1 && expanded && (
+          {review.candidates.length > 1 && (
             <div className="mt-3">
               <p className="text-xs text-muted-foreground mb-1.5">
                 Other candidates ({review.candidates.length - 1}):

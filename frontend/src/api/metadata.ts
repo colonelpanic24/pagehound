@@ -10,12 +10,12 @@ export async function fetchReviewQueue(status = 'pending'): Promise<MetadataRevi
 
 export async function approveReview(
   id: number,
-  overrides?: Partial<Record<string, unknown>>,
+  fields?: Record<string, unknown>,
 ): Promise<{ ok: boolean; book: Book }> {
   const res = await fetch(`${BASE}/review/${id}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(overrides ?? null),
+    body: JSON.stringify(fields !== undefined ? { fields } : null),
   })
   if (!res.ok) throw new Error(`Failed to approve review: ${res.statusText}`)
   return res.json()

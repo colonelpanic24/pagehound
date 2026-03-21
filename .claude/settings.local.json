@@ -10,11 +10,13 @@
       "Bash(ruff --version)",
       "Bash(pip install:*)",
       "Bash(ruff check:*)",
+<<<<<<< Updated upstream
       "Bash(backend/.venv/bin/python3 -m pytest backend/tests/ -q 2>&1)",
       "Bash(backend/.venv/bin/pip install:*)",
       "Bash(backend/.venv/bin/python3 -m pytest backend/tests/ -q)",
       "Bash(npm test:*)",
       "Bash(git stash:*)",
+      "Bash(git pull:*)",
       "Bash(find /var/home/stefan/pagehound -type f -name *.tsx -o -name *.css -o -name tailwind.config.*)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({**d.get\\(''''dependencies'''',{}\\), **d.get\\(''''devDependencies'''',{}\\)}, indent=2\\)\\)\")",
       "Bash(npx shadcn@latest add tooltip card --yes)",

@@ -1,27 +1,25 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  BookOpen, Search, Download, Settings, Library, Sparkles,
+  BookOpen, Search, Download, Settings, Library, Sparkles, TabletSmartphone,
   ChevronsLeft, ChevronsRight, Loader2,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { useActiveJobs } from '@/components/Jobs/JobsStore'
 import { useWsStatus } from '@/hooks/useWebSocket'
 import { useReviewQueue } from '@/hooks/useReviewQueue'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-
-const topNavItems = [
-  { to: '/', label: 'Library', icon: Library, end: true },
-  { to: '/search', label: 'Search', icon: Search },
-  { to: '/downloads', label: 'Downloads', icon: Download },
-]
+import { fetchBooks } from '@/api/books'
 
 export function Sidebar() {
   const navigate = useNavigate()
   const activeJobs = useActiveJobs()
   const wsStatus = useWsStatus()
   const { pendingCount } = useReviewQueue()
+  const { data: allBooks } = useQuery({ queryKey: ['books', {}], queryFn: () => fetchBooks({}) })
+  const totalBooks = allBooks?.length ?? 0
   const hasActiveJobs = activeJobs.length > 0
   const latestJob = activeJobs[0]
 
@@ -56,11 +54,24 @@ export function Sidebar() {
 
       {/* Top nav — scrollable if needed, but won't overflow the viewport */}
       <nav className="flex-1 min-h-0 overflow-y-auto py-2 px-2 flex flex-col gap-0.5">
-        {topNavItems.map(({ to, label, icon: Icon, end }) => (
-          <NavItem key={to} to={to} icon={<Icon className="h-5 w-5" />} collapsed={collapsed} end={end}>
-            {label}
-          </NavItem>
-        ))}
+        <NavItem
+          to="/"
+          icon={<Library className="h-5 w-5" />}
+          collapsed={collapsed}
+          end
+          badge={totalBooks > 0 ? totalBooks : undefined}
+        >
+          Library
+        </NavItem>
+        <NavItem to="/search" icon={<Search className="h-5 w-5" />} collapsed={collapsed}>
+          Search
+        </NavItem>
+        <NavItem to="/downloads" icon={<Download className="h-5 w-5" />} collapsed={collapsed}>
+          Downloads
+        </NavItem>
+        <NavItem to="/kobo" icon={<TabletSmartphone className="h-5 w-5" />} collapsed={collapsed}>
+          Kobo
+        </NavItem>
         <NavItem
           to="/review"
           icon={<Sparkles className="h-5 w-5" />}

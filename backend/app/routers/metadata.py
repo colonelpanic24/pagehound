@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -77,13 +78,17 @@ async def get_review(review_id: int, db: AsyncSession = Depends(get_db)):
     return _review_to_dict(review)
 
 
+class ApproveBody(BaseModel):
+    fields: dict | None = None  # explicit field set; if absent, all suggested_fields are applied
+
+
 @router.post("/review/{review_id}/approve")
 async def approve_review(
     review_id: int,
-    overrides: dict | None = None,
+    body: ApproveBody | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    """Approve a review, optionally with field overrides."""
+    """Approve a review. Pass {fields: {...}} to apply only selected fields."""
     result = await db.execute(
         select(MetadataReview)
         .where(MetadataReview.id == review_id)
@@ -95,9 +100,11 @@ async def approve_review(
     if review.status != "pending":
         raise HTTPException(status_code=409, detail=f"Review already {review.status}")
 
-    fields = dict(review.suggested_fields)
-    if overrides:
-        fields.update({k: v for k, v in overrides.items() if v is not None})
+    # Use caller-supplied field set when provided, otherwise apply all suggested fields
+    if body and body.fields is not None:
+        fields = body.fields
+    else:
+        fields = dict(review.suggested_fields)
 
     book = review.book
     allowed = {
