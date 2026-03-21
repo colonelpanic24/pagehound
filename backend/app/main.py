@@ -83,15 +83,14 @@ if os.path.isdir(covers_path):
 # The StaticFiles mount serves JS/CSS/image assets; the catch-all route below
 # serves index.html for any SPA deep-link path that isn't an asset.
 _static_dir = Path(__file__).resolve().parent.parent / "static"
+# Prefixes handled by dedicated routers — never intercepted by the SPA catch-all
+_BACKEND_PREFIXES = ("api/", "ws", "covers/", "kobo/", "opds")
 if _static_dir.is_dir():
     app.mount("/assets", StaticFiles(directory=str(_static_dir / "assets")), name="assets")
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str) -> FileResponse:
         from fastapi import HTTPException
-        # Let the API, WebSocket, and Kobo/OPDS routers handle their own prefixes
-        _api_prefixes = ("api/", "ws", "covers/", "kobo/", "opds")
-        if any(full_path.startswith(p) for p in _api_prefixes):
+        if any(full_path.startswith(p) for p in _BACKEND_PREFIXES):
             raise HTTPException(status_code=404, detail="Not found")
-        index = _static_dir / "index.html"
-        return FileResponse(str(index))
+        return FileResponse(str(_static_dir / "index.html"))
