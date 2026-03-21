@@ -36,6 +36,7 @@ def book_to_dict(book) -> dict:
         "rating": book.rating,
         "authors": [{"id": a.id, "name": a.name, "sort_name": a.sort_name} for a in (book.authors or [])],
         "series": {"id": book.series.id, "name": book.series.name} if book.series else None,
+        "tags": list(book.tags),
     }
 
 
@@ -52,7 +53,8 @@ def import_book_file(self, file_path: str, job_id: str | None = None) -> dict:
         from ..config import get_settings
         from ..database import SyncSession
         from ..models.author import Author
-        from ..models.book import Book
+        from ..models.book import Book, BookTag
+        from ..models.series import Series
         from ..services import cover_extractor
         from ..services.file_utils import compute_sort_name, compute_sort_title, detect_format
         from ..websocket_manager import publish_event
@@ -104,10 +106,20 @@ def import_book_file(self, file_path: str, job_id: str | None = None) -> dict:
                     session.flush()
                 author_objects.append(author)
 
+            # 5b. Find or create Series record
+            series_obj = None
+            series_name = meta.get("series_name")
+            if series_name:
+                series_obj = session.query(Series).filter(Series.name == series_name).first()
+                if not series_obj:
+                    series_obj = Series(name=series_name)
+                    session.add(series_obj)
+                    session.flush()
+
             # Fall back to filename-derived title if metadata has none
             raw_title: str = meta.get("title") or os.path.splitext(os.path.basename(file_path))[0]
 
-            # 5b. Create Book record
+            # 5c. Create Book record
             book = Book(
                 title=raw_title,
                 sort_title=compute_sort_title(raw_title),
@@ -116,17 +128,22 @@ def import_book_file(self, file_path: str, job_id: str | None = None) -> dict:
                 publisher=meta.get("publisher"),
                 published_date=meta.get("published_date"),
                 page_count=meta.get("page_count"),
+                isbn_10=meta.get("isbn_10"),
+                isbn_13=meta.get("isbn_13"),
                 file_path=file_path,
                 file_format=file_format,
                 file_size=file_size,
                 added_date=datetime.utcnow(),
                 modified_date=datetime.utcnow(),
                 authors=author_objects,
+                series=series_obj,
+                series_index=meta.get("series_index"),
+                tags_assoc=[BookTag(tag=t) for t in (meta.get("tags") or [])],
             )
             session.add(book)
             session.flush()  # get book.id before cover save
 
-            # 5c. Save cover
+            # 5d. Save cover
             cover_data = meta.get("cover_data")
             if cover_data:
                 rel_path = cover_extractor.save_cover(book.id, cover_data, settings.covers_dir)

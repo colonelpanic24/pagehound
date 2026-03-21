@@ -44,6 +44,7 @@ def _book_to_dict(book: Book) -> dict:
         "rating": book.rating,
         "authors": [{"id": a.id, "name": a.name, "sort_name": a.sort_name} for a in book.authors],
         "series": {"id": book.series.id, "name": book.series.name} if book.series else None,
+        "tags": list(book.tags),
     }
 
 

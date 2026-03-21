@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { BookOpen } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -20,8 +21,6 @@ function CoverPlaceholder() {
 export function BookCard({ book, onClick }: Props) {
   const [imgError, setImgError] = useState(false)
   const showImage = book.cover_image_path !== null && !imgError
-
-  const authorNames = book.authors.map((a) => a.name).join(', ')
 
   return (
     <div
@@ -65,11 +64,25 @@ export function BookCard({ book, onClick }: Props) {
         <p className="text-sm font-medium leading-tight line-clamp-2 text-foreground">
           {book.title}
         </p>
-        {authorNames && (
-          <p className="text-xs text-muted-foreground leading-tight truncate">
-            {authorNames}
-          </p>
+        {book.series && (
+          <Link
+            to={`/series/${book.series.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-xs text-primary/70 hover:text-primary leading-tight truncate"
+          >
+            {book.series.name}{book.series_index != null ? ` #${book.series_index % 1 === 0 ? book.series_index.toFixed(0) : book.series_index}` : ''}
+          </Link>
         )}
+        {book.authors.map((author) => (
+          <Link
+            key={author.id}
+            to={`/authors/${author.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-xs text-muted-foreground hover:text-foreground leading-tight truncate"
+          >
+            {author.name}
+          </Link>
+        ))}
       </div>
     </div>
   )

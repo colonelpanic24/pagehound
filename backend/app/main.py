@@ -11,7 +11,19 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
 from .database import init_db
-from .routers import books, downloads, jobs, kobo, kobo_admin, library, metadata, opds, ws
+from .routers import (
+    authors,
+    books,
+    downloads,
+    jobs,
+    kobo,
+    kobo_admin,
+    library,
+    metadata,
+    opds,
+    series,
+    ws,
+)
 from .websocket_manager import ws_manager
 
 logging.basicConfig(level=logging.INFO)
@@ -25,8 +37,10 @@ async def lifespan(app: FastAPI):
     logger.info("PageHound starting up…")
     await init_db()
 
-    # Ensure covers dir exists
+    # Ensure covers and author-photos dirs exist
     os.makedirs(settings.covers_dir, exist_ok=True)
+    if settings.author_photos_dir:
+        os.makedirs(settings.author_photos_dir, exist_ok=True)
 
     # Start Redis pub/sub listener as a background task
     listener_task = asyncio.create_task(ws_manager.start_redis_listener())
@@ -45,7 +59,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="PageHound",
     description="Self-hosted e-book library manager",
-    version="0.2.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 
@@ -60,6 +74,8 @@ app.add_middleware(
 # Routers
 app.include_router(ws.router)
 app.include_router(books.router, prefix="/api")
+app.include_router(series.router, prefix="/api")
+app.include_router(authors.router, prefix="/api")
 app.include_router(jobs.router, prefix="/api")
 app.include_router(library.router, prefix="/api")
 app.include_router(metadata.router, prefix="/api")
@@ -79,12 +95,16 @@ covers_path = settings.covers_dir
 if os.path.isdir(covers_path):
     app.mount("/covers", StaticFiles(directory=covers_path), name="covers")
 
+# Serve author photos
+if settings.author_photos_dir and os.path.isdir(settings.author_photos_dir):
+    app.mount("/author-photos", StaticFiles(directory=settings.author_photos_dir), name="author-photos")
+
 # Serve frontend build if present (demo / production mode).
 # The StaticFiles mount serves JS/CSS/image assets; the catch-all route below
 # serves index.html for any SPA deep-link path that isn't an asset.
 _static_dir = Path(__file__).resolve().parent.parent / "static"
 # Prefixes handled by dedicated routers — never intercepted by the SPA catch-all
-_BACKEND_PREFIXES = ("api/", "ws", "covers/", "kobo/", "opds")
+_BACKEND_PREFIXES = ("api/", "ws", "covers/", "author-photos/", "kobo/", "opds")
 if _static_dir.is_dir():
     app.mount("/assets", StaticFiles(directory=str(_static_dir / "assets")), name="assets")
 

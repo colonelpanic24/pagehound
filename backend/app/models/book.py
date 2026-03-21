@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, Text
+from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
@@ -12,12 +13,11 @@ book_authors = Table(
     Column("author_id", Integer, ForeignKey("authors.id", ondelete="CASCADE"), primary_key=True),
 )
 
-book_tags = Table(
-    "book_tags",
-    Base.metadata,
-    Column("book_id", Integer, ForeignKey("books.id", ondelete="CASCADE"), primary_key=True),
-    Column("tag", String(100), primary_key=True),
-)
+
+class BookTag(Base):
+    __tablename__ = "book_tags"
+    book_id: Mapped[int] = mapped_column(Integer, ForeignKey("books.id", ondelete="CASCADE"), primary_key=True)
+    tag: Mapped[str] = mapped_column(String(100), primary_key=True)
 
 
 class Book(Base):
@@ -58,6 +58,10 @@ class Book(Base):
     authors: Mapped[list["Author"]] = relationship(  # noqa: F821
         "Author", secondary=book_authors, back_populates="books"
     )
+    tags_assoc: Mapped[list["BookTag"]] = relationship(
+        "BookTag", cascade="all, delete-orphan", lazy="selectin"
+    )
+    tags: AssociationProxy[list[str]] = association_proxy("tags_assoc", "tag")
     reading_progress: Mapped[list["ReadingProgress"]] = relationship(  # noqa: F821
         "ReadingProgress", back_populates="book", cascade="all, delete-orphan"
     )

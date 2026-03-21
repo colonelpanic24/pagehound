@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Search, Download, BookOpen, CheckCircle2, XCircle, Loader2, Clock } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { searchBooks, enqueueDownload } from '@/api/downloads'
@@ -161,7 +162,8 @@ function DownloadRow({ item }: { item: DownloadItem }) {
 
 export function DownloadsPage() {
   const queryClient = useQueryClient()
-  const [query, setQuery] = useState('')
+  const [searchParams] = useSearchParams()
+  const [query, setQuery] = useState(searchParams.get('q') ?? '')
   const [source, setSource] = useState('annas_archive')
   const [searching, setSearching] = useState(false)
   const [results, setResults] = useState<SearchResult[] | null>(null)

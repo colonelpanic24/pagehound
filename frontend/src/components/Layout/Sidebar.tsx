@@ -1,14 +1,13 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  BookOpen, Search, Download, Settings, Library, Sparkles, TabletSmartphone,
-  ChevronsLeft, ChevronsRight, Loader2,
+  BookOpen, Download, Settings, Library, Sparkles, TabletSmartphone,
+  ChevronsLeft, ChevronsRight, Loader2, Users, Layers,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { useActiveJobs } from '@/components/Jobs/JobsStore'
-import { useWsStatus } from '@/hooks/useWebSocket'
 import { useReviewQueue } from '@/hooks/useReviewQueue'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { fetchBooks } from '@/api/books'
@@ -16,8 +15,7 @@ import { fetchBooks } from '@/api/books'
 export function Sidebar() {
   const navigate = useNavigate()
   const activeJobs = useActiveJobs()
-  const wsStatus = useWsStatus()
-  const { pendingCount } = useReviewQueue()
+const { pendingCount } = useReviewQueue()
   const { data: allBooks } = useQuery({ queryKey: ['books', {}], queryFn: () => fetchBooks({}) })
   const totalBooks = allBooks?.length ?? 0
   const hasActiveJobs = activeJobs.length > 0
@@ -63,11 +61,14 @@ export function Sidebar() {
         >
           Library
         </NavItem>
-        <NavItem to="/search" icon={<Search className="h-5 w-5" />} collapsed={collapsed}>
-          Search
-        </NavItem>
-        <NavItem to="/downloads" icon={<Download className="h-5 w-5" />} collapsed={collapsed}>
+<NavItem to="/downloads" icon={<Download className="h-5 w-5" />} collapsed={collapsed}>
           Downloads
+        </NavItem>
+        <NavItem to="/series" icon={<Layers className="h-5 w-5" />} collapsed={collapsed}>
+          Series
+        </NavItem>
+        <NavItem to="/authors" icon={<Users className="h-5 w-5" />} collapsed={collapsed}>
+          Authors
         </NavItem>
         <NavItem to="/kobo" icon={<TabletSmartphone className="h-5 w-5" />} collapsed={collapsed}>
           Kobo
@@ -120,7 +121,7 @@ export function Sidebar() {
           Settings
         </NavItem>
 
-        {/* WS dot + collapse toggle */}
+        {/* Collapse toggle */}
         <button
           onClick={toggle}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -133,9 +134,9 @@ export function Sidebar() {
             ? <ChevronsRight className="h-5 w-5 shrink-0" />
             : <ChevronsLeft className="h-5 w-5 shrink-0" />
           }
-          <WsIndicator status={wsStatus} />
         </button>
       </div>
+
     </aside>
   )
 }
@@ -196,17 +197,4 @@ function NavItem({
   }
 
   return link
-}
-
-function WsIndicator({ status }: { status: 'connected' | 'connecting' | 'disconnected' }) {
-  return (
-    <span
-      className={cn(
-        'inline-block h-2 w-2 rounded-full shrink-0',
-        status === 'connected' && 'bg-success',
-        status === 'connecting' && 'bg-yellow-400 animate-pulse',
-        status === 'disconnected' && 'bg-destructive'
-      )}
-    />
-  )
 }

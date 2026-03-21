@@ -20,7 +20,7 @@ function getStoredViewMode(): ViewMode {
 function getStoredGroupBy(): GroupBy {
   try {
     const v = localStorage.getItem('library.groupBy')
-    if (v === 'none' || v === 'author' || v === 'series' || v === 'format' || v === 'language') return v
+    if (v === 'none' || v === 'author' || v === 'series' || v === 'language') return v
   } catch {
     // ignore
   }
@@ -94,7 +94,7 @@ export function LibraryPage() {
         ) : viewMode === 'grid' ? (
           <BookGrid books={books} groupBy={groupBy} onBookClick={setSelectedBook} />
         ) : (
-          <BookList books={books} onBookClick={setSelectedBook} />
+          <BookList books={books} groupBy={groupBy} onBookClick={setSelectedBook} />
         )}
       </div>
 

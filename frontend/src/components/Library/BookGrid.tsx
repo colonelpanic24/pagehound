@@ -1,4 +1,5 @@
 import { BookCard } from './BookCard'
+import { groupSortKey, getGroupKey } from '@/lib/grouping'
 import type { Book, GroupBy } from '@/types'
 
 interface Props {
@@ -17,20 +18,6 @@ function GridLayout({ books, onBookClick }: { books: Book[]; onBookClick?: (book
   )
 }
 
-function getGroupKey(book: Book, groupBy: GroupBy): string {
-  switch (groupBy) {
-    case 'author':
-      return book.authors.length > 0 ? book.authors[0].name : 'Unknown Author'
-    case 'series':
-      return book.series ? book.series.name : 'No Series'
-    case 'format':
-      return book.file_format.toUpperCase()
-    case 'language':
-      return book.language ?? 'Unknown Language'
-    default:
-      return ''
-  }
-}
 
 export function BookGrid({ books, groupBy, onBookClick }: Props) {
   if (groupBy === 'none') {
@@ -46,10 +33,20 @@ export function BookGrid({ books, groupBy, onBookClick }: Props) {
     groupMap.set(key, existing)
   }
 
-  // Sort groups alphabetically
+  // Sort groups alphabetically, ignoring leading articles
   const sortedGroups = Array.from(groupMap.entries()).sort(([a], [b]) =>
-    a.localeCompare(b)
+    groupSortKey(a).localeCompare(groupSortKey(b))
   )
+
+  // Within series groups, sort by series_index then sort_title
+  if (groupBy === 'series') {
+    for (const [, groupBooks] of sortedGroups) {
+      groupBooks.sort((a, b) =>
+        (a.series_index ?? 9999) - (b.series_index ?? 9999) ||
+        a.sort_title.localeCompare(b.sort_title)
+      )
+    }
+  }
 
   return (
     <div className="space-y-8">

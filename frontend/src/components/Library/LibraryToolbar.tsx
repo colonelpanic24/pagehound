@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   LayoutGrid, List, Search, ScanLine, ArrowUp, ArrowDown,
-  Sparkles, SlidersHorizontal, ChevronDown, MoreHorizontal,
+  Sparkles, SlidersHorizontal, ChevronDown, MoreHorizontal, Check,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { triggerScan } from '@/api/books'
@@ -52,6 +52,118 @@ function CheckboxFilterSection({
         ))}
       </div>
     </section>
+  )
+}
+
+const SORT_OPTIONS = [
+  { value: 'title',          label: 'Title' },
+  { value: 'added_date',     label: 'Date added' },
+  { value: 'published_date', label: 'Published' },
+  { value: 'rating',         label: 'Rating' },
+]
+
+function SortRow({
+  label,
+  active,
+  activeDir,
+  onPick,
+}: {
+  label: string
+  active: boolean
+  activeDir: 'asc' | 'desc'
+  onPick: (dir: 'asc' | 'desc') => void
+}) {
+  const [hoverDir, setHoverDir] = useState(false)
+  // When hovering the direction zone, preview the opposite of the active direction (or asc if not active)
+  const baseDir: 'asc' | 'desc' = active ? activeDir : 'asc'
+  const previewDir: 'asc' | 'desc' = baseDir === 'asc' ? 'desc' : 'asc'
+  const displayDir = hoverDir ? previewDir : baseDir
+
+  return (
+    <div className={cn('flex items-center text-sm', active && 'text-primary')}>
+      {/* Sort field — clicking sorts ascending (or keeps current dir if already active) */}
+      <button
+        onClick={() => onPick(active ? activeDir : 'asc')}
+        className="flex-1 flex items-center gap-2 pl-3 py-2 hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+      >
+        <Check className={cn('h-3.5 w-3.5 shrink-0', active ? 'opacity-100' : 'opacity-0')} />
+        {label}
+      </button>
+
+      {/* Direction zone */}
+      <button
+        onMouseEnter={() => setHoverDir(true)}
+        onMouseLeave={() => setHoverDir(false)}
+        onClick={() => onPick(hoverDir ? previewDir : baseDir)}
+        className="flex items-center gap-0.5 pr-3 pl-2 py-2 text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <span className="text-xs">{displayDir === 'asc' ? 'A–Z' : 'Z–A'}</span>
+        {displayDir === 'asc'
+          ? <ArrowDown className="h-3 w-3" />
+          : <ArrowUp className="h-3 w-3" />
+        }
+      </button>
+    </div>
+  )
+}
+
+function SortControl({
+  filters,
+  onFiltersChange,
+}: {
+  filters: BookFilters
+  onFiltersChange: (f: BookFilters) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const sortField = filters.sort ?? 'added_date'
+  const sortDir = filters.sort_dir ?? 'asc'
+  const activeLabel = SORT_OPTIONS.find(o => o.value === sortField)?.label ?? 'Sort'
+
+  useEffect(() => {
+    if (!open) return
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  function pick(value: string, dir: 'asc' | 'desc') {
+    onFiltersChange({ ...filters, sort: value, sort_dir: dir })
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          'h-9 flex items-center gap-1.5 px-3 rounded-md border border-input bg-background text-sm',
+          'text-foreground hover:bg-accent transition-colors',
+          open && 'ring-2 ring-ring ring-offset-2 ring-offset-background'
+        )}
+      >
+        {activeLabel}
+        <span className="text-xs text-muted-foreground">{sortDir === 'asc' ? 'A–Z' : 'Z–A'}</span>
+        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 z-30 mt-1 w-48 rounded-md border border-border bg-popover shadow-md py-1">
+          {SORT_OPTIONS.map(({ value, label }) => (
+            <SortRow
+              key={value}
+              label={label}
+              active={sortField === value}
+              activeDir={sortDir}
+              onPick={(dir) => pick(value, dir)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -220,36 +332,11 @@ export function LibraryToolbar({
         <option value="none">No grouping</option>
         <option value="author">Author</option>
         <option value="series">Series</option>
-        <option value="format">Format</option>
         <option value="language">Language</option>
       </select>
 
-      {/* Sort field */}
-      <select
-        value={filters.sort ?? 'added_date'}
-        onChange={(e) => onFiltersChange({ ...filters, sort: e.target.value })}
-        className={SELECT_CLS}
-      >
-        <option value="title">Title</option>
-        <option value="added_date">Date added</option>
-        <option value="published_date">Published</option>
-        <option value="rating">Rating</option>
-      </select>
-
-      {/* Sort direction */}
-      <button
-        onClick={() => onFiltersChange({ ...filters, sort_dir: filters.sort_dir === 'asc' ? 'desc' : 'asc' })}
-        aria-label={filters.sort_dir === 'asc' ? 'Sort ascending' : 'Sort descending'}
-        className={cn(
-          'h-9 w-9 flex items-center justify-center rounded-md border border-input bg-background',
-          'text-muted-foreground hover:text-foreground hover:bg-accent transition-colors'
-        )}
-      >
-        {filters.sort_dir === 'asc'
-          ? <ArrowUp className="h-4 w-4" />
-          : <ArrowDown className="h-4 w-4" />
-        }
-      </button>
+      {/* Sort */}
+      <SortControl filters={filters} onFiltersChange={onFiltersChange} />
 
       {/* View mode toggle */}
       <div className="flex rounded-md border border-input overflow-hidden">

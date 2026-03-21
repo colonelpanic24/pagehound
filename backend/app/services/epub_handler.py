@@ -20,6 +20,11 @@ def extract_metadata(file_path: str) -> dict:
         "published_date": None,
         "page_count": None,
         "cover_data": None,
+        "series_name": None,
+        "series_index": None,
+        "tags": [],
+        "isbn_10": None,
+        "isbn_13": None,
     }
     try:
         import ebooklib
@@ -81,6 +86,55 @@ def extract_metadata(file_path: str) -> dict:
             if spine_items:
                 # Very rough heuristic: count items (each is roughly a chapter)
                 result["page_count"] = None  # not meaningful for EPUB
+        except Exception:
+            pass
+
+        # Tags / subjects
+        try:
+            subjects = book.get_metadata("DC", "subject")
+            if subjects:
+                result["tags"] = [s[0] for s in subjects if s[0]]
+        except Exception:
+            pass
+
+        # ISBNs — parse DC:identifier values
+        try:
+            identifiers = book.get_metadata("DC", "identifier") or []
+            for val, _attrs in identifiers:
+                if not val:
+                    continue
+                raw = val.strip()
+                lower = raw.lower()
+                candidate = raw.split(":")[-1].strip().replace("-", "")
+                if lower.startswith("isbn:") or (attrs := (_attrs or {})) and str(attrs.get("scheme", "")).upper() == "ISBN":
+                    candidate = raw.split(":")[-1].strip().replace("-", "")
+                    if len(candidate) == 13 and candidate.isdigit() and not result["isbn_13"]:
+                        result["isbn_13"] = candidate
+                    elif len(candidate) == 10 and not result["isbn_10"]:
+                        result["isbn_10"] = candidate
+                elif len(candidate) == 13 and candidate.isdigit() and candidate.startswith("978") and not result["isbn_13"]:
+                    result["isbn_13"] = candidate
+        except Exception:
+            pass
+
+        # Series — Calibre OPF custom meta (calibre:series / calibre:series_index)
+        try:
+            opf_metas = book.metadata.get("http://www.idpf.org/2007/opf", {}).get("meta", [])
+            series_name = None
+            series_index = None
+            for _, attrs in opf_metas:
+                if not isinstance(attrs, dict):
+                    continue
+                if attrs.get("name") == "calibre:series":
+                    series_name = attrs.get("content")
+                elif attrs.get("name") == "calibre:series_index":
+                    try:
+                        series_index = float(attrs["content"])
+                    except (KeyError, ValueError, TypeError):
+                        pass
+            if series_name:
+                result["series_name"] = series_name
+                result["series_index"] = series_index
         except Exception:
             pass
 

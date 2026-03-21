@@ -11,6 +11,8 @@ ENV_FILE="$REPO/backend/.env"
 if [ ! -f "$ENV_FILE" ]; then
   cat > "$ENV_FILE" <<EOF
 BOOKS_DIR=$HOME/Books
+COVERS_DIR=$DATA_DIR/covers
+AUTHOR_PHOTOS_DIR=$DATA_DIR/author-photos
 DATABASE_URL=sqlite+aiosqlite:///$DATA_DIR/bookshelf.db
 REDIS_URL=redis://localhost:6379/0
 SECRET_KEY=dev-secret-key-change-in-prod
