@@ -37,8 +37,13 @@ def _clean(s: str) -> str:
     return s.replace('"', "").strip()
 
 
-def _query(q: str, api_key: str) -> list[MetadataCandidate]:
-    params: dict = {"q": q, "maxResults": 5, "printType": "books"}
+def search_by_author(author_name: str, api_key: str = "") -> list[MetadataCandidate]:
+    """Return up to 20 books by a given author name from Google Books."""
+    return _query(f'inauthor:"{_clean(author_name)}"', api_key, max_results=20)
+
+
+def _query(q: str, api_key: str, max_results: int = 5) -> list[MetadataCandidate]:
+    params: dict = {"q": q, "maxResults": max_results, "printType": "books"}
     if api_key:
         params["key"] = api_key
     try:

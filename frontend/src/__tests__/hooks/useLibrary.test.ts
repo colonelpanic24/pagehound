@@ -55,6 +55,7 @@ function makeBook(overrides: Partial<Book> = {}): Book {
     rating: null,
     authors: [],
     series: null,
+    tags: [],
     ...overrides,
   }
 }

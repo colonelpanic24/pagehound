@@ -20,12 +20,8 @@ class Settings(BaseSettings):
     metadata_strategy: str = "prefer_online"  # prefer_online | fill_gaps
     preferred_source: str = "google_books"  # google_books | open_library
 
-    # Derived
     covers_dir: str = ""
-
-    def model_post_init(self, __context):
-        if not self.covers_dir:
-            object.__setattr__(self, "covers_dir", f"{self.books_dir}/.covers")
+    author_photos_dir: str = ""
 
 
 @lru_cache

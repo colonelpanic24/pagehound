@@ -36,6 +36,7 @@ export interface Book {
   rating: number | null
   authors: Author[]
   series: Series | null
+  tags: string[]
 }
 
 export interface BookFilters {
@@ -50,7 +51,7 @@ export interface BookFilters {
 }
 
 export type ViewMode = 'grid' | 'list'
-export type GroupBy = 'none' | 'author' | 'series' | 'format' | 'language'
+export type GroupBy = 'none' | 'author' | 'series' | 'language'
 
 export interface MetadataCandidate {
   source: string

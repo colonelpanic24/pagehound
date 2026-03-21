@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { BookCard } from "@/components/Library/BookCard";
 import type { Book } from "@/types";
+
+function renderInRouter(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
+}
 
 function makeBook(overrides: Partial<Book> = {}): Book {
   return {
@@ -31,13 +36,14 @@ function makeBook(overrides: Partial<Book> = {}): Book {
     rating: null,
     authors: [],
     series: null,
+    tags: [],
     ...overrides,
   };
 }
 
 describe("BookCard", () => {
   it("renders the book title", () => {
-    render(<BookCard book={makeBook({ title: "Dune" })} />);
+    renderInRouter(<BookCard book={makeBook({ title: "Dune" })} />);
     expect(screen.getByText("Dune")).toBeInTheDocument();
   });
 
@@ -45,44 +51,45 @@ describe("BookCard", () => {
     const book = makeBook({
       authors: [{ id: 1, name: "Frank Herbert", sort_name: "Herbert, Frank" }],
     });
-    render(<BookCard book={book} />);
+    renderInRouter(<BookCard book={book} />);
     expect(screen.getByText("Frank Herbert")).toBeInTheDocument();
   });
 
-  it("renders multiple authors comma-separated", () => {
+  it("renders multiple authors", () => {
     const book = makeBook({
       authors: [
         { id: 1, name: "Author One", sort_name: "One, Author" },
         { id: 2, name: "Author Two", sort_name: "Two, Author" },
       ],
     });
-    render(<BookCard book={book} />);
-    expect(screen.getByText("Author One, Author Two")).toBeInTheDocument();
+    renderInRouter(<BookCard book={book} />);
+    expect(screen.getByText("Author One")).toBeInTheDocument();
+    expect(screen.getByText("Author Two")).toBeInTheDocument();
   });
 
   it("renders the file format badge", () => {
-    render(<BookCard book={makeBook({ file_format: "pdf" })} />);
+    renderInRouter(<BookCard book={makeBook({ file_format: "pdf" })} />);
     expect(screen.getByText("pdf")).toBeInTheDocument();
   });
 
   it("shows Missing overlay when book is missing", () => {
-    render(<BookCard book={makeBook({ is_missing: true })} />);
+    renderInRouter(<BookCard book={makeBook({ is_missing: true })} />);
     expect(screen.getByText("Missing")).toBeInTheDocument();
   });
 
   it("does not show Missing overlay when book is present", () => {
-    render(<BookCard book={makeBook({ is_missing: false })} />);
+    renderInRouter(<BookCard book={makeBook({ is_missing: false })} />);
     expect(screen.queryByText("Missing")).not.toBeInTheDocument();
   });
 
   it("renders cover image when cover_image_path is set", () => {
-    render(<BookCard book={makeBook({ cover_image_path: "/covers/1.jpg", id: 1 })} />);
+    renderInRouter(<BookCard book={makeBook({ cover_image_path: "/covers/1.jpg", id: 1 })} />);
     const img = screen.getByRole("img");
     expect(img).toHaveAttribute("src", "/covers/1.jpg");
   });
 
   it("renders placeholder when cover_image_path is null", () => {
-    render(<BookCard book={makeBook({ cover_image_path: null })} />);
+    renderInRouter(<BookCard book={makeBook({ cover_image_path: null })} />);
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
@@ -90,7 +97,7 @@ describe("BookCard", () => {
     const { default: userEvent } = await import("@testing-library/user-event");
     const user = userEvent.setup();
     const onClick = vi.fn();
-    render(<BookCard book={makeBook()} onClick={onClick} />);
+    renderInRouter(<BookCard book={makeBook()} onClick={onClick} />);
     await user.click(screen.getByText("Test Book"));
     expect(onClick).toHaveBeenCalledOnce();
   });

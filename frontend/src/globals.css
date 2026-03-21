@@ -6,12 +6,13 @@
 @layer base {
   :root {
     --background: oklch(0.99 0 0);
+    --shimmer-highlight: oklch(1 0 0 / 75%);
     --foreground: oklch(0.12 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.12 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.12 0 0);
-    --primary: oklch(0.50 0.09 265);
+    --primary: oklch(0.50 0.09 265);          /* lavender-cool */
     --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.94 0 0);
     --secondary-foreground: oklch(0.2 0 0);
@@ -24,28 +25,37 @@
     --border: oklch(0.88 0 0);
     --input: oklch(0.88 0 0);
     --ring: oklch(0.50 0.09 265);
+    --success: oklch(0.45 0.15 142);
+    --success-foreground: oklch(0.985 0 0);
+    --warning: oklch(0.55 0.16 73);
+    --warning-foreground: oklch(0.12 0 0);
+    --info: oklch(0.52 0.15 220);
+    --info-foreground: oklch(0.985 0 0);
     --radius: 0.625rem;
     --sidebar: oklch(0.97 0 0);
     --sidebar-foreground: oklch(0.12 0 0);
+    --sidebar-primary: oklch(0.50 0.09 265);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.94 0 0);
+    --sidebar-accent-foreground: oklch(0.2 0 0);
     --sidebar-border: oklch(0.88 0 0);
-    --success: oklch(0.45 0.15 142);
-    --success-foreground: oklch(0.985 0 0);
-    --shimmer-highlight: oklch(1 0 0 / 75%);
+    --sidebar-ring: oklch(0.50 0.09 265);
   }
 
   .dark {
-    --background: oklch(0.20 0 0);
-    --foreground: oklch(0.98 0 0);
+    --shimmer-highlight: oklch(0.55 0 0 / 55%);
+    --background: oklch(0.20 0 0);            /* dark grey, not near-black */
+    --foreground: oklch(0.98 0 0);            /* near-white */
     --card: oklch(0.24 0 0);
     --card-foreground: oklch(0.98 0 0);
     --popover: oklch(0.24 0 0);
     --popover-foreground: oklch(0.98 0 0);
-    --primary: oklch(0.65 0.09 265);
+    --primary: oklch(0.65 0.09 265);          /* lavender-cool, lightened for dark bg */
     --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.30 0 0);
     --secondary-foreground: oklch(0.92 0 0);
     --muted: oklch(0.30 0 0);
-    --muted-foreground: oklch(0.85 0 0);
+    --muted-foreground: oklch(0.85 0 0);      /* up from 0.78 — more readable on dark bg */
     --accent: oklch(0.30 0 0);
     --accent-foreground: oklch(0.92 0 0);
     --destructive: oklch(0.70 0.19 22);
@@ -53,12 +63,20 @@
     --border: oklch(1 0 0 / 16%);
     --input: oklch(1 0 0 / 20%);
     --ring: oklch(0.65 0.09 265);
-    --sidebar: oklch(0.18 0 0);
-    --sidebar-foreground: oklch(0.92 0 0);
-    --sidebar-border: oklch(1 0 0 / 16%);
     --success: oklch(0.65 0.18 142);
     --success-foreground: oklch(0.12 0 0);
-    --shimmer-highlight: oklch(0.55 0 0 / 55%);
+    --warning: oklch(0.72 0.18 73);
+    --warning-foreground: oklch(0.12 0 0);
+    --info: oklch(0.62 0.15 220);
+    --info-foreground: oklch(0.985 0 0);
+    --sidebar: oklch(0.18 0 0);               /* slightly darker than background */
+    --sidebar-foreground: oklch(0.92 0 0);
+    --sidebar-primary: oklch(0.65 0.09 265);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.30 0 0);
+    --sidebar-accent-foreground: oklch(0.92 0 0);
+    --sidebar-border: oklch(1 0 0 / 16%);
+    --sidebar-ring: oklch(0.65 0.09 265);
   }
 
   * {
@@ -68,6 +86,10 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Outfit Variable', system-ui, sans-serif;
+  }
+
+  a {
+    text-decoration: none;
   }
 
   button:not(:disabled),

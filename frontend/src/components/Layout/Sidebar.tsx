@@ -1,14 +1,13 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  BookOpen, Search, Download, Settings, Library, Sparkles, TabletSmartphone,
-  ChevronsLeft, ChevronsRight, Loader2,
+  BookOpen, Download, Settings, Library, Sparkles, TabletSmartphone,
+  ChevronsLeft, ChevronsRight, Loader2, Users, Layers,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { useActiveJobs } from '@/components/Jobs/JobsStore'
-import { useWsStatus } from '@/hooks/useWebSocket'
 import { useReviewQueue } from '@/hooks/useReviewQueue'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { fetchBooks } from '@/api/books'
@@ -16,8 +15,7 @@ import { fetchBooks } from '@/api/books'
 export function Sidebar() {
   const navigate = useNavigate()
   const activeJobs = useActiveJobs()
-  const wsStatus = useWsStatus()
-  const { pendingCount } = useReviewQueue()
+const { pendingCount } = useReviewQueue()
   const { data: allBooks } = useQuery({ queryKey: ['books', {}], queryFn: () => fetchBooks({}) })
   const totalBooks = allBooks?.length ?? 0
   const hasActiveJobs = activeJobs.length > 0
@@ -63,11 +61,14 @@ export function Sidebar() {
         >
           Library
         </NavItem>
-        <NavItem to="/search" icon={<Search className="h-5 w-5" />} collapsed={collapsed}>
-          Search
-        </NavItem>
-        <NavItem to="/downloads" icon={<Download className="h-5 w-5" />} collapsed={collapsed}>
+<NavItem to="/downloads" icon={<Download className="h-5 w-5" />} collapsed={collapsed}>
           Downloads
+        </NavItem>
+        <NavItem to="/series" icon={<Layers className="h-5 w-5" />} collapsed={collapsed}>
+          Series
+        </NavItem>
+        <NavItem to="/authors" icon={<Users className="h-5 w-5" />} collapsed={collapsed}>
+          Authors
         </NavItem>
         <NavItem to="/kobo" icon={<TabletSmartphone className="h-5 w-5" />} collapsed={collapsed}>
           Kobo
@@ -120,7 +121,7 @@ export function Sidebar() {
           Settings
         </NavItem>
 
-        {/* WS dot + collapse toggle */}
+        {/* Collapse toggle */}
         <button
           onClick={toggle}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -133,9 +134,9 @@ export function Sidebar() {
             ? <ChevronsRight className="h-5 w-5 shrink-0" />
             : <ChevronsLeft className="h-5 w-5 shrink-0" />
           }
-          <WsIndicator status={wsStatus} />
         </button>
       </div>
+
     </aside>
   )
 }
@@ -164,19 +165,24 @@ function NavItem({
         )
       }
     >
-      <span className="relative shrink-0">
-        {icon}
-        {badge != null && collapsed && (
-          <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-destructive text-[9px] font-bold text-white flex items-center justify-center leading-none">
-            {badge > 9 ? '9+' : badge}
+      {({ isActive }) => (
+        <>
+          <span className="relative shrink-0">
+            {icon}
+            {badge != null && collapsed && (
+              <span className="absolute -top-1.5 -right-1.5 h-2 w-2 rounded-full bg-destructive" />
+            )}
           </span>
-        )}
-      </span>
-      {!collapsed && <span className="flex-1 text-base">{children}</span>}
-      {!collapsed && badge != null && (
-        <span className="ml-auto shrink-0 h-5 min-w-5 rounded-full bg-destructive text-[10px] font-bold text-white flex items-center justify-center px-1 tabular-nums">
-          {badge > 99 ? '99+' : badge}
-        </span>
+          {!collapsed && <span className="flex-1 text-base">{children}</span>}
+          {!collapsed && badge != null && (
+            <span className={cn(
+              'ml-auto text-sm tabular-nums',
+              isActive ? 'text-primary-foreground/70' : 'text-muted-foreground'
+            )}>
+              {badge.toLocaleString()}
+            </span>
+          )}
+        </>
       )}
     </NavLink>
   )
@@ -185,23 +191,10 @@ function NavItem({
     return (
       <Tooltip>
         <TooltipTrigger className="block">{link}</TooltipTrigger>
-        <TooltipContent side="right">{children}{badge != null ? ` (${badge})` : ''}</TooltipContent>
+        <TooltipContent side="right">{children}{badge != null ? ` (${badge.toLocaleString()})` : ''}</TooltipContent>
       </Tooltip>
     )
   }
 
   return link
-}
-
-function WsIndicator({ status }: { status: 'connected' | 'connecting' | 'disconnected' }) {
-  return (
-    <span
-      className={cn(
-        'inline-block h-2 w-2 rounded-full shrink-0',
-        status === 'connected' && 'bg-success',
-        status === 'connecting' && 'bg-yellow-400 animate-pulse',
-        status === 'disconnected' && 'bg-destructive'
-      )}
-    />
-  )
 }

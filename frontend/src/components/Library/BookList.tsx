@@ -10,10 +10,12 @@ import {
 import { ChevronUp, ChevronDown, ChevronsUpDown, BookOpen } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import type { Book } from '@/types'
+import { groupSortKey, getGroupKey } from '@/lib/grouping'
+import type { Book, GroupBy } from '@/types'
 
 interface Props {
   books: Book[]
+  groupBy?: GroupBy
   onBookClick?: (book: Book) => void
 }
 
@@ -112,9 +114,8 @@ const columns = [
   }),
 ]
 
-export function BookList({ books, onBookClick }: Props) {
+function BookTable({ books, onBookClick }: { books: Book[]; onBookClick?: (book: Book) => void }) {
   const [sorting, setSorting] = useState<SortingState>([])
-
   const table = useReactTable({
     data: books,
     columns,
@@ -146,13 +147,9 @@ export function BookList({ books, onBookClick }: Props) {
                     <span className="inline-flex items-center gap-1">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {canSort && (
-                        sorted === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : sorted === 'desc' ? (
-                          <ChevronDown className="h-3 w-3" />
-                        ) : (
-                          <ChevronsUpDown className="h-3 w-3 opacity-40" />
-                        )
+                        sorted === 'asc' ? <ChevronUp className="h-3 w-3" />
+                        : sorted === 'desc' ? <ChevronDown className="h-3 w-3" />
+                        : <ChevronsUpDown className="h-3 w-3 opacity-40" />
                       )}
                     </span>
                   </th>
@@ -189,6 +186,45 @@ export function BookList({ books, onBookClick }: Props) {
           )}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+export function BookList({ books, groupBy = 'none', onBookClick }: Props) {
+  if (groupBy === 'none') {
+    return <BookTable books={books} onBookClick={onBookClick} />
+  }
+
+  const groupMap = new Map<string, Book[]>()
+  for (const book of books) {
+    const key = getGroupKey(book, groupBy)
+    ;(groupMap.get(key) ?? (groupMap.set(key, []), groupMap.get(key)!)).push(book)
+  }
+
+  const sortedGroups = Array.from(groupMap.entries()).sort(([a], [b]) =>
+    groupSortKey(a).localeCompare(groupSortKey(b))
+  )
+
+  if (groupBy === 'series') {
+    for (const [, groupBooks] of sortedGroups) {
+      groupBooks.sort((a, b) =>
+        (a.series_index ?? 9999) - (b.series_index ?? 9999) ||
+        a.sort_title.localeCompare(b.sort_title)
+      )
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {sortedGroups.map(([groupName, groupBooks]) => (
+        <section key={groupName}>
+          <h2 className="text-base font-semibold mb-2 text-foreground border-b border-border pb-1">
+            {groupName}
+            <span className="ml-2 text-sm font-normal text-muted-foreground">({groupBooks.length})</span>
+          </h2>
+          <BookTable books={groupBooks} onBookClick={onBookClick} />
+        </section>
+      ))}
     </div>
   )
 }
