@@ -164,19 +164,24 @@ function NavItem({
         )
       }
     >
-      <span className="relative shrink-0">
-        {icon}
-        {badge != null && collapsed && (
-          <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-destructive text-[9px] font-bold text-white flex items-center justify-center leading-none">
-            {badge > 9 ? '9+' : badge}
+      {({ isActive }) => (
+        <>
+          <span className="relative shrink-0">
+            {icon}
+            {badge != null && collapsed && (
+              <span className="absolute -top-1.5 -right-1.5 h-2 w-2 rounded-full bg-destructive" />
+            )}
           </span>
-        )}
-      </span>
-      {!collapsed && <span className="flex-1 text-base">{children}</span>}
-      {!collapsed && badge != null && (
-        <span className="ml-auto shrink-0 h-5 min-w-5 rounded-full bg-destructive text-[10px] font-bold text-white flex items-center justify-center px-1 tabular-nums">
-          {badge > 99 ? '99+' : badge}
-        </span>
+          {!collapsed && <span className="flex-1 text-base">{children}</span>}
+          {!collapsed && badge != null && (
+            <span className={cn(
+              'ml-auto text-sm tabular-nums',
+              isActive ? 'text-primary-foreground/70' : 'text-muted-foreground'
+            )}>
+              {badge.toLocaleString()}
+            </span>
+          )}
+        </>
       )}
     </NavLink>
   )
@@ -185,7 +190,7 @@ function NavItem({
     return (
       <Tooltip>
         <TooltipTrigger className="block">{link}</TooltipTrigger>
-        <TooltipContent side="right">{children}{badge != null ? ` (${badge})` : ''}</TooltipContent>
+        <TooltipContent side="right">{children}{badge != null ? ` (${badge.toLocaleString()})` : ''}</TooltipContent>
       </Tooltip>
     )
   }
